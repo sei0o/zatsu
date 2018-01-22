@@ -1,8 +1,11 @@
 #!/usr/bin/ruby
 require 'thor'
-# require 'yaml'
 require 'csv'
+require 'active_record'
 require_relative './dsl'
+require_relative './task'
+
+ActiveRecord::Base.establish_connection adapter: :sqlite3, database: './log.db'
 
 class Zatsu < Thor
   package_name 'zatsu'
@@ -21,8 +24,6 @@ class Zatsu < Thor
         f << [task[:duration], name]
       end
     end
-    # File.write "plan.yml", result.to_yaml
-    # system "vim plan.yml"
     system "vim plan.csv"
 
     puts "Good luck!"
