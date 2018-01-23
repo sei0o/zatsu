@@ -22,7 +22,7 @@ module Zatsu
     end
 
     def start hour, minute
-      @tasks[@task_name][:start] = "#{hour}:#{minute}"
+      @tasks[@task_name][:scheduled_start] = {hour: hour, min: minute}
     end
 
     def duration minutes

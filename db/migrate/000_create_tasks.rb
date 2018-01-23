@@ -4,7 +4,9 @@ class CreateTasks < ActiveRecord::Migration[5.0]
       t.string :name, null: false, unique: true
       t.integer :estimated_duration, null: false, default: 0
       t.integer :actual_duration
-      t.datetime :start
+      t.datetime :scheduled_start
+      t.datetime :estimated_start
+      t.datetime :actual_start
 
       t.timestamps
     end
