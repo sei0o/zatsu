@@ -13,9 +13,4 @@ task "バチャコン" do
   duration auto || 150
 end
 
-# scheduled events
-
-# rest time (fill with blank and use for unscheduled tasks)
-
-p @options
-p @tasks
+# scheduled even
