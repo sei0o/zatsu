@@ -2,3 +2,4 @@ plan.csv
 plan.yml
 Gemfile.lock
 log.db
+erl_crash.dump

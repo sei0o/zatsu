@@ -3,6 +3,7 @@ module Zatsu
     attr_reader :tasks
 
     def initialize options
+      @group = :default
       @task_name = nil
       @tasks = {}
       @options = options
@@ -32,6 +33,12 @@ module Zatsu
     def auto
       logs = Task.where(name: @task_name).where.not(actual_duration: nil).last(5)
       logs.empty? ? nil : logs.map(&:actual_duration).inject(:+) / logs.size
+    end
+
+    def group sym
+      @group = sym
+      yield
+      @group = :default
     end
   end
 end
