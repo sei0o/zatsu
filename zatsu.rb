@@ -28,7 +28,7 @@ module Zatsu
 
     def show_status
       puts "Est.  Act.  Est.  Act.  Name"
-      Manager.get_plan.each do |t|
+      get_plan.each do |t|
         puts "#{t.estimated_start.localtime.strftime('%R').ljust(5)} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.estimated_duration.to_s.rjust(5)} #{t.actual_duration.to_s.rjust(5)} #{t.name}"
       end
     end
