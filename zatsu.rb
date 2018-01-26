@@ -26,10 +26,14 @@ module Zatsu
       Task.where(estimated_start: Time.zone.now.all_day).order(:estimated_start)
     end
 
+    def get_record
+      Task.where(actual_start: Time.zone.now.all_day).order(:actual_start)
+    end
+
     def show_status
       puts "Est.  Act.  Est.  Act.  Name"
       tasks = get_plan
-      tasks = Task.where(actual_start: Time.zone.now.all_day) if tasks.empty?
+      tasks = get_record if tasks.empty?
       tasks.each do |t|
         puts "#{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{t&.actual_duration&.to_s&.rjust(5) || '     '} #{t.name}"
       end
@@ -64,7 +68,49 @@ module Zatsu
     end
 
     def review_recording
-      # do nothing yet
+      if get_plan.any?
+        File.write 'record.csv', generate_csv(get_plan)
+      else
+        File.write 'record.csv', generate_csv(get_record)
+      end
+      system 'vim record.csv'
+      update_from_csv 'record.csv'
+    end
+
+    def generate_csv tasks
+      csv = ['est,act,name']
+      tasks.each do |t|
+        csv << "#{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '    '},#{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '    '},#{t.name}"
+      end
+      # add FINISH task　(to adjust actual_duration of the last task)
+      csv << "-----,#{(tasks[-1].actual_start + tasks[-1].actual_duration * 60).localtime.strftime('%R')},FINISH" if tasks[-1].actual_duration
+      csv.join "\n"
+    end
+
+    def update_from_csv filename
+      records = CSV.table filename
+
+      get_plan.destroy_all
+      get_record.destroy_all
+
+      tasks = records.map do |r|
+        {
+          est: r[:est] =~ /\d\d:\d\d/ ? Time.zone.now.change(hour: r[:est].strip.split(':')[0].to_i, min: r[:est].strip.split(':')[1].to_i, sec: 0) : nil,
+          act: Time.zone.now.change(hour: r[:act].strip.split(':')[0].to_i, min: r[:act].strip.split(':')[1].to_i, sec: 0),
+          name: r[:name].strip,
+        }
+      end
+
+      tasks.each_cons(2) do |cur, nx|
+        break if cur[:name] == 'FINISH'
+        Task.create(
+          estimated_start: cur[:est],
+          actual_start: cur[:act],
+          estimated_duration: nx[:est] && cur[:est] ? (nx[:est] - cur[:est]) / 60 : nil,
+          actual_duration: (nx[:act] - cur[:act]) / 60,
+          name: cur[:name]
+        )
+      end
     end
 
     def recording?
@@ -133,6 +179,16 @@ module Zatsu
 
       latest = Task.order(:actual_start).last
       latest.update actual_duration: (Time.zone.now - latest.actual_start) / 60
+    end
+
+    desc "review", "review your day"
+    def review
+      if Manager.recording? || (Manager.get_plan.empty? && Manager.get_record.empty?)
+        puts "You haven't finished your recording."
+        return
+      end
+
+      Manager.review_recording
     end
   end
 end
