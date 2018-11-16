@@ -1,12 +1,11 @@
 #!/usr/bin/ruby
-
 unless Dir.exist? "#{Dir.home}/.zatsu"
-  require 'zatsu/setup'
+  require_relative '../lib/zatsu/setup'
   Zatsu.setup
 end
 
 require 'active_record'
-require 'zatsu'
+require_relative '../lib/zatsu'
 
 ActiveRecord::Base.establish_connection adapter: :sqlite3, database: "#{Dir.home}/.zatsu/log.db"
 Time.zone = 'Asia/Tokyo'
