@@ -17,7 +17,8 @@ module Zatsu
     def create_plan hash
       parsed = {}
       Dir.glob 'generators/*.rb' do |genf|
-        parsed.merge! DSL.parse File.read(genf), hash
+        groupname = genf[0..-4].to_sym # the filename without extension ".rb"
+        parsed.merge! DSL.parse File.read(genf), groupname, hash
       end
       schedule_tasks parsed
     end
@@ -75,6 +76,20 @@ module Zatsu
       end
       system 'vim record.csv'
       update_from_csv 'record.csv'
+
+      # suggest add new tasks to routine
+      new_tasks = []
+      get_record.each do |t|
+        new_tasks << t.name if Task.where(name: t.name).count == 1
+      end
+      new_tasks.each do |t|
+        print "Save '#{t}' as a routine task? (y/n)"
+        if STDIN.gets.chomp == 'y'
+          File.open 'generators/routine.rb', 'a' do |f|
+            f.puts "task '#{t}'"
+          end
+        end
+      end
     end
 
     def generate_csv tasks

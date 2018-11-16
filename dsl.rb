@@ -2,15 +2,15 @@ module Zatsu
   class DSL
     attr_reader :tasks
 
-    def initialize options
-      @group = :default
+    def initialize options, group
+      @group = group
       @task_name = nil
       @tasks = {}
       @options = options
     end
 
-    def self.parse program, hash
-      new(hash).tap do |obj|
+    def self.parse program, group, hash
+      new(hash, group).tap do |obj|
         obj.instance_eval program
       end.tasks
     end
@@ -26,19 +26,8 @@ module Zatsu
       @tasks[@task_name][:scheduled_start] = {hour: hour, min: minute}
     end
 
-    def duration minutes
+    def duration *minutes
       @tasks[@task_name][:estimated_duration] = minutes
-    end
-
-    def auto
-      logs = Task.where(name: @task_name).where.not(actual_duration: nil).last(5)
-      logs.empty? ? nil : logs.map(&:actual_duration).inject(:+) / logs.size
-    end
-
-    def group sym
-      @group = sym
-      yield
-      @group = :default
     end
   end
 end

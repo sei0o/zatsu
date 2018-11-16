@@ -6,25 +6,16 @@ module Zatsu
     end
 
     def schedule
-      busy = Array.new 30 * 60
+      estimate_duration
+
+      busy = Array.new 30 * 60 # 30時間 * 60分 = 1800分を塗りつぶしていくイメージ
       scheduled_tasks   = @tasks.select { |n, t| t[:scheduled_start] }
       unscheduled_tasks = @tasks.select { |n, t| !t[:scheduled_start] }
 
-      scheduled_tasks.each do |name, task|
-        st = Time.zone.now.change hour: task[:scheduled_start][:hour], min: task[:scheduled_start][:min], sec: 0
-        Task.create(
-          name: name,
-          estimated_duration: task[:estimated_duration],
-          scheduled_start: st,
-          estimated_start: st
-        )
+      busy = schedule_tasks_with_start scheduled_tasks, busy
 
-        (task[:scheduled_start][:hour] * 60 + task[:scheduled_start][:min]).upto(task[:scheduled_start][:hour] * 60 + task[:scheduled_start][:min] + task[:estimated_duration] - 1) do |i|
-          raise "Conflict: #{name} and #{busy[i]}" if busy[i]
-          busy[i] = name
-        end
-      end
       # 最初と最後のタスクぐらいルーチン化されているはずなのでそれより外の領域は削る
+      # FIXME: ↑ほんまか？
       busy.each_with_index do |val, i|
         break if val
         busy[i] = "No Task"
@@ -34,7 +25,52 @@ module Zatsu
         busy[i] = "No Task"
       end
 
-      unscheduled_tasks.each do |name, task|
+      busy = schedule_tasks_without_start unscheduled_tasks, busy
+
+      buf_start = nil
+      busy.each_with_index do |cur, i|
+        if cur
+          next unless buf_start
+
+          st = Time.zone.now.change hour: buf_start / 60, min: buf_start % 60, sec: 0
+          buf_len = i - buf_start
+          Task.create(
+            name: "(Buffer)",
+            estimated_duration: buf_len,
+            estimated_start: st
+          )
+
+          buf_start = nil
+        else
+          buf_start = i unless buf_start
+        end
+      end
+    end
+
+    def schedule_tasks_with_start tasks, busy
+      tasks.each do |name, task|
+        ss_h = task[:scheduled_start][:hour]
+        ss_m = task[:scheduled_start][:min]
+
+        st = Time.zone.now.change hour: ss_h, min: ss_m, sec: 0
+        Task.create(
+          name: name,
+          estimated_duration: task[:estimated_duration],
+          scheduled_start: st,
+          estimated_start: st
+        )
+
+        (ss_h * 60 + ss_m).upto(ss_h * 60 + ss_m + task[:estimated_duration] - 1) do |i|
+          raise "Conflict: #{name} and #{busy[i]}" if busy[i]
+          busy[i] = name
+        end
+      end
+
+      busy
+    end
+
+    def schedule_tasks_without_start tasks, busy
+      tasks.each do |name, task|
         len = 0
         busy.each_cons(2).with_index do |(prev, cur), i|
           next if cur
@@ -60,19 +96,19 @@ module Zatsu
         end
       end
 
-      len = 1
-      busy.each_cons(2).with_index do |(prev, cur), i|
-        if prev && !cur # start of buffer
-          len = 1
-        elsif !prev && cur # end of buffer
-          st = Time.zone.now.change hour: (i-len+1) / 60, min: (i-len+1) % 60, sec: 0
-          Task.create(
-            name: "(Buffer)",
-            estimated_duration: len,
-            estimated_start: st
-          )
-        else
-          len += 1
+      busy
+    end
+
+    def estimate_duration
+      @tasks.each do |name, info|
+        if !info[:estimated_duration] || info[:estimated_duration][0] == :auto
+          logs = Task.where(name: info[:name]).where.not(actual_duration: nil).last(5)
+          if logs.empty?
+            info[:estimated_duration] = info[:estimated_duration] ? info[:estimated_duration][1] : 10
+          else
+            # Use average duration
+            info[:estimated_duration] = logs.map(&:actual_duration).inject(:+) / logs.size
+          end
         end
       end
     end
