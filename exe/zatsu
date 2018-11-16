@@ -1,5 +1,15 @@
 #!/usr/bin/ruby
+
+unless Dir.exist? "#{Dir.home}/.zatsu"
+  require 'zatsu/setup'
+  p Zatsu.methods
+  Zatsu.setup
+end
+
+require 'active_record'
 require 'zatsu'
 
-Zatsu.setup unless Dir.exist? "#{Dir.home}/.zatsu"
+ActiveRecord::Base.establish_connection adapter: :sqlite3, database: "#{Dir.home}/.zatsu/log.db"
+Time.zone = 'Asia/Tokyo'
 
+Zatsu::Command.start ARGV

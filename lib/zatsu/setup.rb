@@ -3,6 +3,8 @@ require 'fileutils'
 module Zatsu
   ZATSU_DIR = "#{Dir.home}/.zatsu"
 
+  module_function
+
   def setup
     return if Dir.exist? ZATSU_DIR
 

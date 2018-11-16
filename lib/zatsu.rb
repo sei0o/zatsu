@@ -6,14 +6,7 @@ require 'active_support'
 require 'zatsu/dsl'
 require 'zatsu/task'
 require 'zatsu/schedulers/firstfit'
-
-module Zatsu
-  class Error < StandardError; end
-  # Your code goes here...
-end
-
-ActiveRecord::Base.establish_connection adapter: :sqlite3, database: './log.db'
-Time.zone = 'Asia/Tokyo'
+require 'zatsu/setup'
 
 module Zatsu
   module Manager
@@ -212,5 +205,3 @@ module Zatsu
     end
   end
 end
-
-Zatsu::Command.start ARGV
