@@ -1,9 +1,8 @@
 require 'fileutils'
 require 'active_record'
+require_relative './const'
 
 module Zatsu
-  ZATSU_DIR = "#{Dir.home}/.zatsu"
-
   module_function
 
   def setup

@@ -7,6 +7,7 @@ require 'zatsu/dsl'
 require 'zatsu/task'
 require 'zatsu/schedulers/firstfit'
 require 'zatsu/setup'
+require_relative './zatsu/const'
 
 module Zatsu
   module Manager
@@ -14,7 +15,7 @@ module Zatsu
 
     def create_plan hash
       parsed = {}
-      Dir.glob 'generators/*.rb' do |genf|
+      Dir.glob "#{ZATSU_DIR}/generators/*.rb" do |genf|
         groupname = genf[0..-4].to_sym # the filename without extension ".rb"
         parsed.merge! DSL.parse File.read(genf), groupname, hash
       end
@@ -68,12 +69,12 @@ module Zatsu
 
     def review_recording
       if get_plan.any?
-        File.write 'record.csv', generate_csv(get_plan)
+        File.write "#{ZATSU_DIR}/record.csv", generate_csv(get_plan)
       else
-        File.write 'record.csv', generate_csv(get_record)
+        File.write "#{ZATSU_DIR}/record.csv", generate_csv(get_record)
       end
-      system 'vim record.csv'
-      update_from_csv 'record.csv'
+      system "vim #{ZATSU_DIR}/record.csv"
+      update_from_csv "#{ZATSU_DIR}/record.csv"
 
       # suggest add new tasks to routine
       new_tasks = []
@@ -83,7 +84,7 @@ module Zatsu
       new_tasks.each do |t|
         print "Save '#{t}' as a routine task? (y/n)"
         if STDIN.gets.chomp == 'y'
-          File.open 'generators/routine.rb', 'a' do |f|
+          File.open "#{ZATSU_DIR}/generators/routine.rb", 'a' do |f|
             f.puts "task '#{t}'"
           end
         end
