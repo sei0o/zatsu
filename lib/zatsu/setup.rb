@@ -19,9 +19,7 @@ module Zatsu
       p ex
     end
 
-    ActiveRecord::Base.establish_connection adapter: :sqlite3, database: "#{Dir.home}/.zatsu/log.db"
-    # see: https://github.com/padrino/padrino-framework/pull/2182/commits/faf9becab40446346f405b9fda55538a7461a86a
-    ActiveRecord::MigrationContext.new("#{__dir__}/db/migrate/").migrate
+    migrate_db
   end
 
   def reset_scripts
@@ -30,5 +28,11 @@ module Zatsu
     FileUtils.copy_entry "#{__dir__}/schedulers", "#{ZATSU_DIR}/schedulers"
 
     puts "Copied original scripts!"
+  end
+
+  def migrate_db
+    ActiveRecord::Base.establish_connection adapter: :sqlite3, database: "#{Dir.home}/.zatsu/log.db"
+    # see: https://github.com/padrino/padrino-framework/pull/2182/commits/faf9becab40446346f405b9fda55538a7461a86a
+    ActiveRecord::MigrationContext.new("#{__dir__}/db/migrate/").migrate
   end
 end

@@ -1,4 +1,3 @@
-require "zatsu/version"
 require 'thor'
 require 'csv'
 require 'active_record'
@@ -203,6 +202,11 @@ module Zatsu
       end
 
       Manager.review_recording
+    end
+
+    desc "migrate", "migrate db files"
+    def migrate
+      Zatsu.migrate_db
     end
   end
 end
