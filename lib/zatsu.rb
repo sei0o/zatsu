@@ -5,6 +5,7 @@ require 'active_support'
 require_relative './zatsu/dsl'
 require_relative './zatsu/task'
 require_relative './zatsu/schedulers/firstfit'
+require_relative './zatsu/schedulers/most_important'
 require_relative './zatsu/setup'
 require_relative './zatsu/const'
 
@@ -39,7 +40,8 @@ module Zatsu
     end
 
     def schedule_tasks tasks
-      FirstFit.new(tasks).schedule
+      # FirstFit.new(tasks).schedule
+      MostImportant.new(tasks).schedule
     end
 
     def switch_task

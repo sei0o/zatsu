@@ -17,7 +17,7 @@ module Zatsu
 
     def task name
       @task_name = name
-      @tasks[@task_name] ||= {}
+      @tasks[@task_name] ||= {custom: {}}
       yield if block_given?
       @task_name = nil
     end
@@ -28,6 +28,10 @@ module Zatsu
 
     def duration *minutes
       @tasks[@task_name][:estimated_duration] = minutes
+    end
+
+    def method_missing name, *args, &block
+      @tasks[@task_name][:custom][name.to_sym] = args.size == 1 ? args[0] : args
     end
   end
 end
