@@ -1,11 +1,16 @@
-#!/usr/bin/ruby
+require "zatsu/version"
 require 'thor'
 require 'csv'
 require 'active_record'
 require 'active_support'
-require_relative './dsl'
-require_relative './task'
-require_relative './schedulers/firstfit'
+require 'zatsu/dsl'
+require 'zatsu/task'
+require 'zatsu/schedulers/firstfit'
+
+module Zatsu
+  class Error < StandardError; end
+  # Your code goes here...
+end
 
 ActiveRecord::Base.establish_connection adapter: :sqlite3, database: './log.db'
 Time.zone = 'Asia/Tokyo'

@@ -1,7 +1,6 @@
-source :rubygems
+source "https://rubygems.org"
 
-gem 'rake'
-gem 'thor'
-gem 'sqlite3'
-gem 'activerecord'
-gem 'activesupport'
+git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
+
+# Specify your gem's dependencies in zatsu.gemspec
+gemspec

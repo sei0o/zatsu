@@ -1,0 +1,5 @@
+#!/usr/bin/ruby
+require 'zatsu'
+
+Zatsu.setup unless Dir.exist? "#{Dir.home}/.zatsu"
+
