@@ -213,6 +213,16 @@ module Zatsu
       Manager.review_recording
     end
 
+    desc "rename (task #) (name)", "rename your task"
+    def rename idx, name
+      tasks = Manager.get_plan
+      tasks = Manager.get_record if tasks.empty?
+      tasks[idx.to_i][:name] = name
+      tasks[idx.to_i].save
+
+      Manager.show_status
+    end
+
     desc "migrate", "migrate db files"
     def migrate
       Zatsu.migrate_db
