@@ -140,6 +140,11 @@ module Zatsu
     package_name 'zatsu'
     default_command :switch
 
+    desc "genedit group_name", "edit generator"
+    def genedit group_name
+      system "code #{ZATSU_DIR}/generators/#{group_name}.rb"
+    end
+
     desc "plan [arg1:val1, ...]", "plan your schedule for today"
     def plan *args
       if Manager.recording?
