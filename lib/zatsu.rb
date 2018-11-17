@@ -37,7 +37,9 @@ module Zatsu
       tasks.each_with_index do |t, i|
         custom = t[:custom].empty? ? '' : t.custom_fields.map { |k,v| "#{k[0..1]}:#{v}" }.join("/")
         custom = "<#{custom}> " unless custom.empty?
-        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{t&.actual_duration&.to_s&.rjust(5) || '     '} #{custom}#{t.name}"
+        acdr = t&.actual_duration&.to_s&.rjust(5) || '     '
+        acdr = "#{((Time.zone.now - t.actual_start) / 60).floor}+".rjust(5) if t == tasks.last && !t.actual_duration
+        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{acdr} #{custom}#{t.name}"
       end
     end
 
