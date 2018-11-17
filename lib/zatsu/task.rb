@@ -8,7 +8,7 @@ module Zatsu
     end
 
     def set_custom_fields hash
-      custom = hash.to_json
+      self.custom = hash.to_json
     end
 
     def custom_field sym

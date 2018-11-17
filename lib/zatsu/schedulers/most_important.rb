@@ -31,11 +31,13 @@ module Zatsu
           len += 1
           if len == task[:estimated_duration] # enough free time
             st = Time.zone.now.change hour: (i-len+1) / 60, min: (i-len+1) % 60, sec: 0
-            Task.create(
+            tm = Task.new(
               name: name,
               estimated_duration: task[:estimated_duration],
-              estimated_start: st
+              estimated_start: st,
             )
+            tm.set_custom_fields task[:custom]
+            tm.save!
 
             (i-len+1).upto(i) do |n|
               raise "Auto Scheduling Conflict: #{name} and #{busy[n]}" if busy[n]

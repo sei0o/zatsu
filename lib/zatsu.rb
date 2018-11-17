@@ -35,7 +35,9 @@ module Zatsu
       tasks = get_plan
       tasks = get_record if tasks.empty?
       tasks.each_with_index do |t, i|
-        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{t&.actual_duration&.to_s&.rjust(5) || '     '} #{t.name}"
+        custom = t[:custom].empty? ? '' : t.custom_fields.map { |k,v| "#{k[0..1]}:#{v}" }.join("/")
+        custom = "<#{custom}> " unless custom.empty?
+        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{t&.actual_duration&.to_s&.rjust(5) || '     '} #{custom}#{t.name}"
       end
     end
 
