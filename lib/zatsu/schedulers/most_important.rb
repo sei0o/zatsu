@@ -43,6 +43,8 @@ module Zatsu
               raise "Auto Scheduling Conflict: #{name} and #{busy[n]}" if busy[n]
               busy[n] = name
             end
+
+            break
           end
         end
       end
