@@ -31,11 +31,11 @@ module Zatsu
     end
 
     def show_status
-      puts "Est.  Act.  Est.  Act.  Name"
+      puts "     E/Sta A/Sta E/Dur A/Dur Name"
       tasks = get_plan
       tasks = get_record if tasks.empty?
-      tasks.each do |t|
-        puts "#{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{t&.actual_duration&.to_s&.rjust(5) || '     '} #{t.name}"
+      tasks.each_with_index do |t, i|
+        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{t&.actual_duration&.to_s&.rjust(5) || '     '} #{t.name}"
       end
     end
 
