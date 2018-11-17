@@ -50,19 +50,20 @@ module Zatsu
       MostImportant.new(tasks).schedule
     end
 
-    def switch_task
-      if get_plan.any?
-        [nil, get_plan, nil].flatten.each_cons(2) do |prev, cur| # 汚い
-          unless cur&.actual_start
-            cur&.update actual_start: Time.zone.now
-            prev&.update actual_duration: (Time.zone.now - prev.actual_start) / 60
-            break
+    def switch_task name
+      Task.today.each do |t|
+        if t.actual_start && !t.actual_duration # doing the task
+          t.update actual_duration: (Time.zone.now - t.actual_start) / 60
+
+          # The next task is the one which has not been done yet and has the earliest start
+          t_next = Task.where(actual_duration: nil).order(:estimated_start).first
+          if t_next && !name
+            t_next.update actual_start: Time.zone.now
+          else
+            # Start the task with the given name immediately
+            Task.create actual_start: Time.zone.now, name: name
           end
         end
-      else
-        latest = Task.order(:actual_start).last
-        latest.update actual_duration: (Time.zone.now - latest.actual_start) / 60
-        Task.create actual_start: Time.zone.now
       end
     end
 
@@ -154,8 +155,7 @@ module Zatsu
     end
 
     def recording?
-      (get_plan.any? && get_plan[0].actual_start && !get_plan[-1].actual_duration) || # with plan
-      (get_plan.empty? && Task.exists?(actual_start: Time.zone.now.all_day, actual_duration: nil)) # without plan
+      Task.exists?(actual_start: Time.zone.now.all_day, actual_duration: nil)
     end
   end
 
@@ -194,7 +194,7 @@ module Zatsu
     option :noplan, type: :boolean
     def switch task_name = nil
       if Manager.recording?
-        Manager.switch_task
+        Manager.switch_task task_name
         Manager.show_status
 
         if !options[:noplan] && !Manager.recording? # if finished
