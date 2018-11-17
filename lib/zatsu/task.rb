@@ -3,8 +3,15 @@ require 'json'
 module Zatsu
   class Task < ActiveRecord::Base
 
-    def custom_fields 
-      JSON.parse(custom)
+    def self.today
+      self.where(actual_start: Time.zone.now.all_day)
+          .or(where(estimated_start: Time.zone.now.all_day))
+          .order(:actual_start) # actualを優先
+          .order(:estimated_start)
+    end
+
+    def custom_fields
+      JSON.parse(custom.empty? ? "{}" : custom)
     end
 
     def set_custom_fields hash

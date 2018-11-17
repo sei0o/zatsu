@@ -8,6 +8,7 @@ require_relative './zatsu/schedulers/firstfit'
 require_relative './zatsu/schedulers/most_important'
 require_relative './zatsu/setup'
 require_relative './zatsu/const'
+require_relative './zatsu/util'
 
 module Zatsu
   module Manager
@@ -32,8 +33,9 @@ module Zatsu
 
     def show_status
       puts "     E/Sta A/Sta E/Dur A/Dur Name"
-      tasks = get_plan
-      tasks = get_record if tasks.empty?
+      # tasks = get_plan
+      # tasks = get_record if tasks.empty?
+      tasks = Task.today
       tasks.each_with_index do |t, i|
         custom = t[:custom].empty? ? '' : t.custom_fields.map { |k,v| "#{k[0..1]}:#{v}" }.join("/")
         custom = "<#{custom}> " unless custom.empty?
@@ -62,6 +64,25 @@ module Zatsu
         latest.update actual_duration: (Time.zone.now - latest.actual_start) / 60
         Task.create actual_start: Time.zone.now
       end
+    end
+
+    def edit_task idx, opts
+      task = Task.today[idx.to_i]
+
+      if opts["actual-start"] && opts["actual-duration"] || opts["estimated-start"] && opts["estimated-duration"]
+        raise "You cannot specify both of the start time and duration"
+      end
+
+      task.actual_start = Util.ct opts["actual-start"] if opts["actual-start"]
+      task.actual_duration = opts["actual-duration"].to_i if opts["actual-duration"]
+      task.estimated_start = Util.ct opts["estimated-start"] if opts["estimated-start"]
+      task.estimated_duration = opts["estimated-duration"].to_i if opts["estimated-duration"]
+
+      task.set_custom_fields task.custom_fields.merge opts["fields"] if opts["fields"]
+      
+      task.save
+
+      show_status
     end
 
     def start_recording
@@ -146,7 +167,7 @@ module Zatsu
     def genedit group_name
       system "code #{ZATSU_DIR}/generators/#{group_name}.rb"
     end
-
+    
     desc "plan [arg1:val1, ...]", "plan your schedule for today"
     def plan *args
       if Manager.recording?
@@ -213,6 +234,16 @@ module Zatsu
       end
 
       Manager.review_recording
+    end
+
+    desc "edit (task #) [--actual-start 9:39] [--actual-duration 40] [--estimated-start 10:10] [--estimated-duration 30] [-f importance:3 tags:dev,zatsu ...]", "edit your task"
+    option :"estimated-start", aliases: :a
+    option :"estimated-duration", aliases: :b
+    option :"actual-start", aliases: :c # FIXME: bad shorthand options
+    option :"actual-duration", aliases: :d
+    option :fields, aliases: :f, type: :hash
+    def edit idx
+      Manager.edit_task idx, options
     end
 
     desc "rename (task #) (name)", "rename your task"
