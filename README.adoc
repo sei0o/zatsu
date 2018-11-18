@@ -1,0 +1,24 @@
+== zatsu
+
+記録ベースで現実的な計画を自動で立ててくれるソフトウェアです｡
+zatsu is a highly-customizable scheduling software that makes the day of lazy people (like me) more efficient and happy.
+
+=== Installation
+
+The installation should be done using simple commands like below but I have not published zatsu in the rubygems repository, so you can run `git clone` and `bundle exec rake install` instead.
+```ruby
+$ gem install zatsu
+```
+
+=== Usage
+
+Refer to https://scrapbox.io/sei0opub/Roadmap (The guide is only available in Japanese but you can always read the code!).
+
+=== Contribution
+
+PRs and issues are welcome. You can also write and share your own generators/schedulers/estimators.
+Since this is my completely personal project and I'm going to create what I love, so please don't expect me to react/merge all of the PRs or issues. :)
+
+=== License
+
+MIT
