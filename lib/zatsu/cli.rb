@@ -94,6 +94,27 @@ module Zatsu
       Manager.show_status
     end
 
+    desc "combine [task #] [task #] (name)", "combine tasks between the two tasks to a single task"
+    def combine idx_from, idx_to, name = nil
+      tasks = Task.today
+      t_from = tasks[idx_from.to_i]
+      tt = tasks[(idx_from.to_i)..(idx_to.to_i)]
+
+      # For now simply sum up the durations of the tasks
+      # FIXME: 間に空き時間があればそれも足すべきなのだろうか
+      new_task = Task.create(
+        name: name,
+        estimated_start: t_from.estimated_start,
+        estimated_duration: tt.inject(0) {|m, x| m + (x.estimated_duration || 0)},
+        actual_start: t_from.actual_start,
+        actual_duration: tt.inject(0) {|m, x| m + (x.actual_duration || 0)}
+      )
+      
+      tt.each do |x|
+        Task.destroy x.id
+      end
+    end
+
     desc "migrate", "migrate db files"
     def migrate
       Zatsu.migrate_db
