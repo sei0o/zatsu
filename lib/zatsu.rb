@@ -32,7 +32,7 @@ module Zatsu
     end
 
     def show_status
-      puts "     E/Sta A/Sta E/Dur A/Dur Name"
+      puts "     E/Sta E/Dur A/Sta A/Dur Name"
       # tasks = get_plan
       # tasks = get_record if tasks.empty?
       tasks = Task.today
@@ -41,7 +41,7 @@ module Zatsu
         custom = "<#{custom}> " unless custom.empty?
         acdr = t&.actual_duration&.to_s&.rjust(5) || '     '
         acdr = "#{((Time.zone.now - t.actual_start) / 60).floor}+".rjust(5) if t.actual_start && !t.actual_duration
-        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{acdr} #{custom}#{t.name}"
+        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{t.actual_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{acdr} #{custom}#{t.name}"
       end
     end
 
@@ -69,10 +69,6 @@ module Zatsu
 
     def edit_task idx, opts
       task = Task.today[idx.to_i]
-
-      if opts["actual-start"] && opts["actual-duration"] || opts["estimated-start"] && opts["estimated-duration"]
-        raise "You cannot specify both of the start time and duration"
-      end
 
       task.actual_start = Util.ct opts["actual-start"] if opts["actual-start"]
       task.actual_duration = opts["actual-duration"].to_i if opts["actual-duration"]
@@ -217,11 +213,6 @@ module Zatsu
 
     desc "finish", "finish recording"
     def finish
-      if Manager.get_plan.any?
-        puts "You don't have to use finish command when you have a plan."
-        return
-      end
-
       latest = Task.order(:actual_start).last
       latest.update actual_duration: (Time.zone.now - latest.actual_start) / 60
     end
@@ -248,8 +239,7 @@ module Zatsu
 
     desc "rename (task #) (name)", "rename your task"
     def rename idx, name
-      tasks = Manager.get_plan
-      tasks = Manager.get_record if tasks.empty?
+      tasks = Task.today
       tasks[idx.to_i][:name] = name
       tasks[idx.to_i].save
 
