@@ -11,4 +11,4 @@ require 'zatsu'
 ActiveRecord::Base.establish_connection adapter: :sqlite3, database: "#{Dir.home}/.zatsu/log.db"
 Time.zone = 'Asia/Tokyo'
 
-Zatsu::Command.start ARGV
+Zatsu::CLI.start ARGV
