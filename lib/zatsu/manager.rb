@@ -70,12 +70,28 @@ module Zatsu
       task = Task.today[idx.to_i]
 
       task.name = opts["name"] if opts["name"]
-      task.actual_start = Util.ct opts["actual-start"] if opts["actual-start"]
-      task.actual_duration = opts["actual-duration"].to_i if opts["actual-duration"]
-      task.estimated_start = Util.ct opts["estimated-start"] if opts["estimated-start"]
-      task.estimated_duration = opts["estimated-duration"].to_i if opts["estimated-duration"]
-
       task.set_custom_fields task.custom_fields.merge opts["fields"] if opts["fields"]
+
+      if opts["actual-start"] == "none"
+        task.actual_start = nil
+      elsif opts["actual-start"]
+        task.actual_start = Util.ct opts["actual-start"]
+      end
+      if opts["estimated-start"] == "none"
+        task.estimated_start = nil
+      elsif opts["actual-start"]
+        task.estimated_start = Util.ct opts["estimated-start"]
+      end
+      if opts["actual-duration"] == "none"
+        task.actual_duration = nil
+      elsif opts["actual-duration"]
+        task.actual_duration = opts["actual-duration"].to_i
+      end
+      if opts["actual-start"] == "none"
+        task.actual_start = nil
+      elsif opts["actual-start"]
+        task.actual_start = opts["actual-start"].to_i
+      end
       
       task.save
 
