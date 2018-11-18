@@ -79,7 +79,7 @@ module Zatsu
       end
       if opts["estimated-start"] == "none"
         task.estimated_start = nil
-      elsif opts["actual-start"]
+      elsif opts["estimated-start"]
         task.estimated_start = Util.ct opts["estimated-start"]
       end
       if opts["actual-duration"] == "none"
@@ -87,10 +87,10 @@ module Zatsu
       elsif opts["actual-duration"]
         task.actual_duration = opts["actual-duration"].to_i
       end
-      if opts["actual-start"] == "none"
-        task.actual_start = nil
-      elsif opts["actual-start"]
-        task.actual_start = opts["actual-start"].to_i
+      if opts["estimated-duration"] == "none"
+        task.estimated_duration = nil
+      elsif opts["estimated-duration"]
+        task.estimated_duration = opts["estimated-duration"].to_i
       end
       
       task.save
