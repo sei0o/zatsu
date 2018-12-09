@@ -85,6 +85,13 @@ module Zatsu
       Manager.edit_task idx, options
     end
 
+    desc "bulkedit", "edit your tasks using external editor"
+    def bulkedit
+      Manager.export_to_csv "#{ZATSU_DIR}/record.csv"
+      system "vim #{ZATSU_DIR}/record.csv"
+      Manager.update_from_csv "#{ZATSU_DIR}/record.csv"
+    end
+
     desc "rename (task #) (name)", "rename your task"
     def rename idx, name
       tasks = Task.today

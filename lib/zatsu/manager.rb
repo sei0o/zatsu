@@ -107,13 +107,9 @@ module Zatsu
     end
 
     def review_recording
-      if get_plan.any?
-        File.write "#{ZATSU_DIR}/record.csv", generate_csv(get_plan)
-      else
-        File.write "#{ZATSU_DIR}/record.csv", generate_csv(get_record)
-      end
+      export_to_csv "#{ZATSU_DIR}/record.csv"
       system "vim #{ZATSU_DIR}/record.csv"
-      update_from_csv "#{ZATSU_DIeR}/record.csv"
+      update_from_csv "#{ZATSU_DIR}/record.csv"
 
       # suggest add new tasks to routine
       new_tasks = []
@@ -138,6 +134,10 @@ module Zatsu
       # add FINISH task　(to adjust actual_duration of the last task)
       csv << "-----,#{(tasks[-1].actual_start + tasks[-1].actual_duration * 60).localtime.strftime('%R')},FINISH" if tasks[-1].actual_duration
       csv.join "\n"
+    end
+
+    def export_to_csv filename
+      File.write filename, generate_csv(get_plan.any? ? get_plan : get_record)
     end
 
     def update_from_csv filename
