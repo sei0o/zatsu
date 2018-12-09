@@ -98,11 +98,11 @@ module Zatsu
       show_status
     end
 
-    def start_recording
-      if get_plan.any?
-        get_plan[0].update actual_start: Time.zone.now
+    def start_recording name = nil
+      if get_plan.any? && !name
+        get_plan[0].update actual_start: Time.zone.now, name: name
       else
-        Task.create actual_start: Time.zone.now
+        Task.create actual_start: Time.zone.now, name: name
       end
     end
 
