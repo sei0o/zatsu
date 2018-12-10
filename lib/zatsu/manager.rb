@@ -50,18 +50,34 @@ module Zatsu
     def switch_task name
       Task.today.each do |t|
         if t.actual_start && !t.actual_duration # doing the task
+          p t
           t.update actual_duration: (Time.zone.now - t.actual_start) / 60
 
           # The next task is the one which has not been done yet and has the earliest start
-          t_next = Task.where(actual_duration: nil).order(:estimated_start).first
+          t_next = Task.today.where(actual_duration: nil).first
           if t_next && !name
             t_next.update actual_start: Time.zone.now
+            return
           else
             # Start the task with the given name immediately
             Task.create actual_start: Time.zone.now, name: name
+            return
           end
         end
       end
+
+      # if users wanted to continue their work after finishing
+      # fill the empty zone
+      last = Task.today.last
+      duration = (Time.zone.now - (last.actual_start + last.actual_duration)) / 60
+      if last && duration.floor > 0
+        Task.create(
+          actual_start: last.actual_start + last.actual_duration,
+          actual_duration: duration,
+          name: "(empty)")
+      end
+
+      Task.create actual_start: Time.zone.now, name: name || ""
     end
 
     def edit_task idx, opts
@@ -164,8 +180,6 @@ module Zatsu
       records.each do |cur|
         last = tasks.last
 
-        p cur
-        p parse_time(last&.actual_start, cur[:act])
         est = parse_time(last&.estimated_start, cur[:est])
         act = parse_time(last&.actual_start, cur[:act])
         

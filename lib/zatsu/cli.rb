@@ -54,7 +54,8 @@ module Zatsu
           return
         end
 
-        Manager.start_recording task_name
+        # Manager.start_recording task_name
+        Manager.switch_task task_name
       end
     end
 
