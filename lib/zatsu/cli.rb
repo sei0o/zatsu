@@ -1,5 +1,6 @@
 require 'thor'
 require 'yaml'
+require 'rainbow'
 require_relative './manager'
 require_relative './util'
 
@@ -55,7 +56,8 @@ module Zatsu
           return
         end
 
-        puts Util::config["start_message"].sample
+        puts Rainbow(Util::config["start_message"].sample).yellow
+
         Manager.switch_task task_name
       end
 
