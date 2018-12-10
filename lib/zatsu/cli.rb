@@ -54,7 +54,7 @@ module Zatsu
           return
         end
 
-        Manager.start_recording
+        Manager.start_recording task_name
       end
     end
 
@@ -87,6 +87,11 @@ module Zatsu
 
     desc "bulkedit", "edit your tasks using external editor"
     def bulkedit
+      if Task.today.empty?
+        puts "You currently have no tasks"
+        return
+      end
+
       Manager.export_to_csv "#{ZATSU_DIR}/record.csv"
       system "vim #{ZATSU_DIR}/record.csv"
       Manager.update_from_csv "#{ZATSU_DIR}/record.csv"

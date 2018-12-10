@@ -32,8 +32,6 @@ module Zatsu
 
     def show_status
       puts "     E/Sta E/Dur A/Sta A/Dur Name"
-      # tasks = get_plan
-      # tasks = get_record if tasks.empty?
       tasks = Task.today
       tasks.each_with_index do |t, i|
         custom = t[:custom].empty? ? '' : t.custom_fields.map { |k,v| "#{k[0..1]}:#{v}" }.join("/")
@@ -140,30 +138,50 @@ module Zatsu
       File.write filename, generate_csv(get_plan.any? ? get_plan : get_record)
     end
 
+    def parse_time prev_time, str
+      if str =~ /\d\d:\d\d/
+        return Time.zone.now.change(
+          hour: str.strip.split(':')[0].to_i,
+          min: str.strip.split(':')[1].to_i, 
+          sec: 0)
+      end
+      
+      if str =~ /d\d+/
+        return prev_time + str.strip[1..-1].to_i * 60
+      end
+
+      nil
+    end
+
     def update_from_csv filename
       records = CSV.table filename
 
-      get_plan.destroy_all
-      get_record.destroy_all
+      Task.today.destroy_all
 
-      tasks = records.map do |r|
-        {
-          est: r[:est] =~ /\d\d:\d\d/ ? Time.zone.now.change(hour: r[:est].strip.split(':')[0].to_i, min: r[:est].strip.split(':')[1].to_i, sec: 0) : nil,
-          act: Time.zone.now.change(hour: r[:act].strip.split(':')[0].to_i, min: r[:act].strip.split(':')[1].to_i, sec: 0),
-          name: r[:name].strip,
-        }
-      end
+      raise "The first task must not have relative time." if records[0][:est] =~ /\+\d+/ || records[0][:act] =~ /\+\d+/
 
-      tasks.each_cons(2) do |cur, nx|
+      tasks = []
+      records.each do |cur|
+        last = tasks.last
+
+        p cur
+        p parse_time(last&.actual_start, cur[:act])
+        est = parse_time(last&.estimated_start, cur[:est])
+        act = parse_time(last&.actual_start, cur[:act])
+        
+        last.estimated_duration = (est - last.estimated_start) / 60 if est && last&.estimated_start
+        last.actual_duration = (act - last.actual_start) / 60 if act && last&.actual_start
+        last&.save
+        
         break if cur[:name] == 'FINISH'
-        Task.create(
-          estimated_start: cur[:est],
-          actual_start: cur[:act],
-          estimated_duration: nx[:est] && cur[:est] ? (nx[:est] - cur[:est]) / 60 : nil,
-          actual_duration: (nx[:act] - cur[:act]) / 60,
-          name: cur[:name]
+        tasks << Task.new(
+          estimated_start: est,
+          actual_start: act,
+          name: cur[:name]&.strip
         )
       end
+
+      tasks.last.save
     end
 
     def recording?
