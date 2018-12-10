@@ -15,6 +15,7 @@ module Zatsu
       FileUtils.mkdir ["#{ZATSU_DIR}/generators", "#{ZATSU_DIR}/schedulers"]
       FileUtils.copy_entry "#{__dir__}/generators", "#{ZATSU_DIR}/generators"
       FileUtils.copy_entry "#{__dir__}/schedulers", "#{ZATSU_DIR}/schedulers"
+      FileUtils.copy "#{__dir__}/config.default.yml", "#{ZATSU_DIR}/config.yml"
     rescue Exception => ex
       p ex
     end

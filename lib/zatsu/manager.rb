@@ -1,6 +1,7 @@
 require 'csv'
 require 'active_record'
 require 'active_support'
+require 'yaml'
 require_relative './dsl'
 require_relative './task'
 require_relative './schedulers/firstfit'
@@ -50,7 +51,6 @@ module Zatsu
     def switch_task name
       Task.today.each do |t|
         if t.actual_start && !t.actual_duration # doing the task
-          p t
           t.update actual_duration: (Time.zone.now - t.actual_start) / 60
 
           # The next task is the one which has not been done yet and has the earliest start
@@ -110,14 +110,6 @@ module Zatsu
       task.save
 
       show_status
-    end
-
-    def start_recording name = nil
-      if get_plan.any? && !name
-        get_plan[0].update actual_start: Time.zone.now, name: name
-      else
-        Task.create actual_start: Time.zone.now, name: name
-      end
     end
 
     def review_recording

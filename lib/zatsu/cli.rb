@@ -1,5 +1,7 @@
 require 'thor'
+require 'yaml'
 require_relative './manager'
+require_relative './util'
 
 module Zatsu
   class CLI < Thor
@@ -54,7 +56,7 @@ module Zatsu
           return
         end
 
-        # Manager.start_recording task_name
+        puts Util::config["start_message"].sample
         Manager.switch_task task_name
       end
     end
