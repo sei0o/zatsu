@@ -33,6 +33,7 @@ module Zatsu
 
       print "Start recording with this plan? (y/n) "
       return if STDIN.gets.chomp != "y"
+      TaskModel.today.destroy_all
       Manager.save_plan plan
       Manager.show_status
     end
@@ -64,7 +65,7 @@ module Zatsu
 
         puts Rainbow(Util::config["start_message"].sample).yellow
 
-        Manager.switch_task task_name
+        Manager.start_recording task_name
       end
 
       Util::command_succeeded

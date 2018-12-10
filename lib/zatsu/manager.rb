@@ -23,7 +23,7 @@ module Zatsu
       schedule_tasks(parsed).sort_by(&:estimated_start)
     end
 
-    def save_plan
+    def save_plan tasks
       tasks.each { |t| t.to_model.save! }
     end
 
@@ -82,7 +82,7 @@ module Zatsu
       # if users wanted to continue their work after finishing
       # fill the empty zone
       last = TaskModel.today.last
-      duration = (Time.zone.now - (last.actual_start + last.actual_duration)) / 60
+      duration = (Time.zone.now - (last.actual_start + last.actual_duration * 60)) / 60
       if last && duration.floor > 0
         TaskModel.create(
           actual_start: last.actual_start + last.actual_duration,
@@ -91,6 +91,14 @@ module Zatsu
       end
 
       TaskModel.create actual_start: Time.zone.now, name: name || ""
+    end
+
+    def start_recording task_name = nil
+      if task_name || get_plan.empty?
+        TaskModel.create actual_start: Time.zone.now, name: task_name || ""
+      else
+        TaskModel.today.where(actual_duration: nil).first.update actual_start: Time.zone.now
+      end
     end
 
     def edit_task idx, opts
