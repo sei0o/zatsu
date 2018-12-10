@@ -22,6 +22,7 @@ module Zatsu
 
       sorted_objs.each do |name, obj|
         len = 0
+        scheduled = false
         busy.each_cons(2).with_index do |(prev, cur), i|
           next if cur
           if prev
@@ -36,17 +37,20 @@ module Zatsu
               name: name,
               estimated_duration: obj[:estimated_duration],
               estimated_start: st,
+              custom: obj[:custom]
             )
-            # tm.set_custom_fields task[:custom]
 
             (i-len+1).upto(i) do |n|
               raise "Auto Scheduling Conflict: #{name} and #{busy[n]}" if busy[n]
               busy[n] = name
             end
 
+            scheduled = true
             break
           end
         end
+
+        puts "Could not allocate enough time for #{name}(#{obj[:estimated_duration]}min)" unless scheduled
       end
 
       [result, busy]

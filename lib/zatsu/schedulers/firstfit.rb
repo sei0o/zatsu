@@ -1,4 +1,5 @@
 require_relative '../task'
+require_relative '../util'
 
 module Zatsu
   class FirstFit
@@ -17,20 +18,26 @@ module Zatsu
 
       tasks, busy = schedule_tasks_with_start scheduled_tasks, busy
       result += tasks
-
-      # 最初と最後のタスクぐらいルーチン化されているはずなのでそれより外の領域は削る
-      # FIXME: ↑ほんまか？
-      busy.each_with_index do |val, i|
-        break if val
-        busy[i] = "No Task"
+      
+      if scheduled_tasks.empty?
+        start_time = ask_time_to_start
+        busy[start_time.hour * 60 + start_time.min - 1] = "X" # mark the previous minute of the time to start busy
       end
-      busy.each_with_index.reverse_each do |val, i|
+
+      # 最初のタスク or ユーザが指定した時間より前の領域には入れない
+      busy.each_with_index do |val, i|
         break if val
         busy[i] = "No Task"
       end
 
       tasks, busy = schedule_tasks_without_start unscheduled_tasks, busy
       result += tasks
+
+      # 後ろを詰める
+      busy.each_with_index.reverse_each do |val, i|
+        break if val
+        busy[i] = "No Task"
+      end
 
       buf_start = nil
       busy.each_with_index do |cur, i|
@@ -42,7 +49,7 @@ module Zatsu
           result << Task.new(
             name: "(Buffer)",
             estimated_duration: buf_len,
-            estimated_start: st
+            estimated_start: st,
           )
 
           buf_start = nil
@@ -66,7 +73,8 @@ module Zatsu
           name: name,
           estimated_duration: obj[:estimated_duration],
           scheduled_start: st,
-          estimated_start: st
+          estimated_start: st,
+          custom: obj[:custom]
         )
 
         (ss_h * 60 + ss_m).upto(ss_h * 60 + ss_m + obj[:estimated_duration] - 1) do |i|
@@ -82,6 +90,7 @@ module Zatsu
       tasks = []
       task_objects.each do |name, obj|
         len = 0
+        scheduled = false
         busy.each_cons(2).with_index do |(prev, cur), i|
           next if cur
           if prev
@@ -95,15 +104,21 @@ module Zatsu
             tasks << Task.new(
               name: name,
               estimated_duration: obj[:estimated_duration],
-              estimated_start: st
+              estimated_start: st,
+              custom: obj[:custom]
             )
 
-            (i-len+1).upto(i) do |n|
+            (i-len+1).upto(i) do |n| # mark as busy...
               raise "Auto Scheduling Conflict: #{name} and #{busy[n]}" if busy[n]
               busy[n] = name
             end
+
+            scheduled = true
+            break
           end
         end
+
+        puts "Could not allocate enough time for #{name}(#{obj[:estimated_duration]}min)" unless scheduled
       end
 
       [tasks, busy]
@@ -121,6 +136,11 @@ module Zatsu
           end
         end
       end
+    end
+
+    def ask_time_to_start
+      print "What time are you going to start your tasks? (e.g. 13:30) "
+      Util::ct(STDIN.gets.chomp)
     end
 
   end

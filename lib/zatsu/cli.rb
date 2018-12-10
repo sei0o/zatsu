@@ -14,7 +14,8 @@ module Zatsu
       system "code #{ZATSU_DIR}/generators/#{group_name}.rb"
     end
     
-    desc "plan [arg1:val1, ...]", "plan your schedule for today"
+    desc "plan [arg1:val1, ...] [--ignore group...]", "plan your schedule for today"
+    option :ignore, type: :array, aliases: :i
     def plan *args
       if Manager.recording?
         print "A recording has already started. Want to stop and create a new plan? (y/n) "
@@ -27,7 +28,7 @@ module Zatsu
       end
 
       Manager.get_plan.destroy_all
-      plan = Manager.create_plan hash
+      plan = Manager.create_plan hash, options["ignore"] || []
 
       Manager.show_plan plan
 
