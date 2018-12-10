@@ -15,11 +15,12 @@ module Zatsu
     # def database_change
     # end
 
-    def schedule_tasks_without_start tasks, busy
-      # put Most Important Tasks (MITs) at first
-      sorted_tasks = Hash[ tasks.sort_by { |k, v| v[:custom][:importance] ? -v[:custom][:importance] : 0 } ]
+    def schedule_tasks_without_start task_objects, busy
+      result = []
+      # put Most Important TaskModels (MITs) at first
+      sorted_objs = Hash[ task_objects.sort_by { |k, v| v[:custom][:importance] ? -v[:custom][:importance] : 0 } ]
 
-      sorted_tasks.each do |name, task|
+      sorted_objs.each do |name, obj|
         len = 0
         busy.each_cons(2).with_index do |(prev, cur), i|
           next if cur
@@ -29,15 +30,14 @@ module Zatsu
           end
 
           len += 1
-          if len == task[:estimated_duration] # enough free time
+          if len == obj[:estimated_duration] # enough free time
             st = Time.zone.now.change hour: (i-len+1) / 60, min: (i-len+1) % 60, sec: 0
-            tm = Task.new(
+            result << Task.new(
               name: name,
-              estimated_duration: task[:estimated_duration],
+              estimated_duration: obj[:estimated_duration],
               estimated_start: st,
             )
-            tm.set_custom_fields task[:custom]
-            tm.save!
+            # tm.set_custom_fields task[:custom]
 
             (i-len+1).upto(i) do |n|
               raise "Auto Scheduling Conflict: #{name} and #{busy[n]}" if busy[n]
@@ -49,7 +49,7 @@ module Zatsu
         end
       end
 
-      busy
+      [result, busy]
     end
 
   end

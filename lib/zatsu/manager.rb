@@ -20,20 +20,33 @@ module Zatsu
         groupname = genf[0..-4].to_sym # the filename without extension ".rb"
         parsed.merge! DSL.parse File.read(genf), groupname, hash
       end
-      schedule_tasks parsed
+      schedule_tasks(parsed).sort_by(&:estimated_start)
+    end
+
+    def save_plan
+      tasks.each { |t| t.to_model.save! }
     end
 
     def get_plan
-      Task.where(estimated_start: Time.zone.now.all_day).order(:estimated_start)
+      TaskModel.where(estimated_start: Time.zone.now.all_day).order(:estimated_start)
     end
 
     def get_record
-      Task.where(actual_start: Time.zone.now.all_day).order(:actual_start)
+      TaskModel.where(actual_start: Time.zone.now.all_day).order(:actual_start)
+    end
+
+    def show_plan tasks
+      puts "     E/Sta E/Dur Name"
+      tasks.each_with_index do |t, i|
+        custom = t.custom.map { |k, v| p k, v;"#{k[0..1]}:#{v}" }.join("/")
+        custom = "<#{custom}> " unless custom.empty?
+        puts "[#{i.to_s.rjust(2)}] #{t&.estimated_start&.localtime&.strftime('%R')&.ljust(5) || '     '} #{t&.estimated_duration&.to_s&.rjust(5) || '     '} #{custom}#{t.name}"
+      end
     end
 
     def show_status
       puts "     E/Sta E/Dur A/Sta A/Dur Name"
-      tasks = Task.today
+      tasks = TaskModel.today
       tasks.each_with_index do |t, i|
         custom = t[:custom].empty? ? '' : t.custom_fields.map { |k,v| "#{k[0..1]}:#{v}" }.join("/")
         custom = "<#{custom}> " unless custom.empty?
@@ -43,24 +56,24 @@ module Zatsu
       end
     end
 
-    def schedule_tasks tasks
+    def schedule_tasks task_objects
       # FirstFit.new(tasks).schedule
-      MostImportant.new(tasks).schedule
+      MostImportant.new(task_objects).schedule
     end
 
     def switch_task name
-      Task.today.each do |t|
+      TaskModel.today.each do |t|
         if t.actual_start && !t.actual_duration # doing the task
           t.update actual_duration: (Time.zone.now - t.actual_start) / 60
 
           # The next task is the one which has not been done yet and has the earliest start
-          t_next = Task.today.where(actual_duration: nil).first
+          t_next = TaskModel.today.where(actual_duration: nil).first
           if t_next && !name
             t_next.update actual_start: Time.zone.now
             return
           else
             # Start the task with the given name immediately
-            Task.create actual_start: Time.zone.now, name: name
+            TaskModel.create actual_start: Time.zone.now, name: name
             return
           end
         end
@@ -68,20 +81,20 @@ module Zatsu
 
       # if users wanted to continue their work after finishing
       # fill the empty zone
-      last = Task.today.last
+      last = TaskModel.today.last
       duration = (Time.zone.now - (last.actual_start + last.actual_duration)) / 60
       if last && duration.floor > 0
-        Task.create(
+        TaskModel.create(
           actual_start: last.actual_start + last.actual_duration,
           actual_duration: duration,
           name: "(empty)")
       end
 
-      Task.create actual_start: Time.zone.now, name: name || ""
+      TaskModel.create actual_start: Time.zone.now, name: name || ""
     end
 
     def edit_task idx, opts
-      task = Task.today[idx.to_i]
+      task = TaskModel.today[idx.to_i]
 
       task.name = opts["name"] if opts["name"]
       task.set_custom_fields task.custom_fields.merge opts["fields"] if opts["fields"]
@@ -120,7 +133,7 @@ module Zatsu
       # suggest add new tasks to routine
       new_tasks = []
       get_record.each do |t|
-        new_tasks << t.name if Task.where(name: t.name).count == 1
+        new_tasks << t.name if TaskModel.where(name: t.name).count == 1
       end
       new_tasks.each do |t|
         print "Save '#{t}' as a routine task? (y/n)"
@@ -164,7 +177,7 @@ module Zatsu
     def update_from_csv filename
       records = CSV.table filename
 
-      Task.today.destroy_all
+      TaskModel.today.destroy_all
 
       raise "The first task must not have relative time." if records[0][:est] =~ /\+\d+/ || records[0][:act] =~ /\+\d+/
 
@@ -180,7 +193,7 @@ module Zatsu
         last&.save
         
         break if cur[:name] == 'FINISH'
-        tasks << Task.new(
+        tasks << TaskModel.new(
           estimated_start: est,
           actual_start: act,
           name: cur[:name]&.strip
@@ -191,7 +204,7 @@ module Zatsu
     end
 
     def recording?
-      Task.exists?(actual_start: Time.zone.now.all_day, actual_duration: nil)
+      TaskModel.exists?(actual_start: Time.zone.now.all_day, actual_duration: nil)
     end
   end
 end

@@ -27,7 +27,13 @@ module Zatsu
       end
 
       Manager.get_plan.destroy_all
-      Manager.create_plan hash
+      plan = Manager.create_plan hash
+
+      Manager.show_plan plan
+
+      print "Start recording with this plan? (y/n) "
+      return if STDIN.gets.chomp != "y"
+      Manager.save_plan plan
       Manager.show_status
     end
 
@@ -66,7 +72,7 @@ module Zatsu
 
     desc "finish", "finish recording"
     def finish
-      latest = Task.order(:actual_start).last
+      latest = TaskModel.order(:actual_start).last
       latest.update actual_duration: (Time.zone.now - latest.actual_start) / 60
     end
 
@@ -93,7 +99,7 @@ module Zatsu
 
     desc "bulkedit", "edit your tasks using external editor"
     def bulkedit
-      if Task.today.empty?
+      if TaskModel.today.empty?
         puts "You currently have no tasks"
         return
       end
@@ -105,7 +111,7 @@ module Zatsu
 
     desc "rename (task #) (name)", "rename your task"
     def rename idx, name
-      tasks = Task.today
+      tasks = TaskModel.today
       tasks[idx.to_i][:name] = name
       tasks[idx.to_i].save
 
@@ -114,13 +120,13 @@ module Zatsu
 
     desc "combine [task #] [task #] (name)", "combine tasks between the two tasks to a single task"
     def combine idx_from, idx_to, name = nil
-      tasks = Task.today
+      tasks = TaskModel.today
       t_from = tasks[idx_from.to_i]
       tt = tasks[(idx_from.to_i)..(idx_to.to_i)]
 
       # For now simply sum up the durations of the tasks
       # FIXME: 間に空き時間があればそれも足すべきなのだろうか
-      new_task = Task.create(
+      new_task = TaskModel.create(
         name: name,
         estimated_start: t_from.estimated_start,
         estimated_duration: tt.inject(0) {|m, x| m + (x.estimated_duration || 0)},
@@ -129,7 +135,7 @@ module Zatsu
       )
       
       tt.each do |x|
-        Task.destroy x.id
+        TaskModel.destroy x.id
       end
     end
 

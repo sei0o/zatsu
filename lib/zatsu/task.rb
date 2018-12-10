@@ -1,32 +1,31 @@
-require 'json'
+require 'active_record'
+require_relative './taskmodel'
 
 module Zatsu
-  class Task < ActiveRecord::Base
+  class Task
+    attr_accessor :name, :actual_start, :actual_duration, :estimated_start, :estimated_duration, :scheduled_start, :custom
 
-    def self.today
-      self.where(actual_start: Time.zone.now.all_day)
-          .or(where(estimated_start: Time.zone.now.all_day))
-          .order(:actual_start) # actualを優先
-          .order(:estimated_start)
+    def initialize hash
+      @name = hash[:name] || ""
+      @actual_start = hash[:actual_start]
+      @actual_duration = hash[:actual_duration]
+      @estimated_start = hash[:estimated_start]
+      @estimated_duration = hash[:estimated_duration]
+      @scheduled_start = hash[:scheduled_start]
+      @custom = hash[:custom] || {}
     end
 
-    def custom_fields
-      JSON.parse(custom.empty? ? "{}" : custom)
+    def to_model
+      tm = TaskModel.new(
+        name: @name,
+        actual_start: @actual_start,
+        actual_duration: @actual_duration,
+        estimated_start: @estimated_start,
+        estimated_duration: @estimated_duration
+      )
+      tm.set_custom_fields @custom
+      
+      tm
     end
-
-    def set_custom_fields hash
-      self.custom = hash.to_json
-    end
-
-    def custom_field sym
-      JSON.parse(custom)[sym.to_s]
-    end
-
-    def set_custom_field sym, val
-      x = custom_fields
-      x[sym] = val
-      set_custom_fields x
-    end
-
   end
 end
