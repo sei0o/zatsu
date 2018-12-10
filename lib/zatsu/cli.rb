@@ -40,7 +40,6 @@ module Zatsu
     def switch task_name = nil
       if Manager.recording?
         Manager.switch_task task_name
-        Manager.show_status
 
         if !options[:noplan] && !Manager.recording? # if finished
           print "You have finished the plan for today. Want to review your record? (y/n) "
@@ -59,6 +58,8 @@ module Zatsu
         puts Util::config["start_message"].sample
         Manager.switch_task task_name
       end
+
+      Util::command_succeeded
     end
 
     desc "finish", "finish recording"
@@ -106,7 +107,7 @@ module Zatsu
       tasks[idx.to_i][:name] = name
       tasks[idx.to_i].save
 
-      Manager.show_status
+      Util::command_succeeded
     end
 
     desc "combine [task #] [task #] (name)", "combine tasks between the two tasks to a single task"
