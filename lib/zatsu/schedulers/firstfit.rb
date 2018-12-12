@@ -16,7 +16,7 @@ module Zatsu
       scheduled_tasks   = @task_objects.select { |n, t| t[:scheduled_start] }
       unscheduled_tasks = @task_objects.select { |n, t| !t[:scheduled_start] }
 
-      tasks, busy = schedule_tasks_with_start scheduled_tasks, busy
+      tasks, reschedule_objs, busy = schedule_tasks_with_start scheduled_tasks, busy
       result += tasks
       
       if scheduled_tasks.empty?
@@ -30,7 +30,7 @@ module Zatsu
         busy[i] = "No Task"
       end
 
-      tasks, busy = schedule_tasks_without_start unscheduled_tasks, busy
+      tasks, busy = schedule_tasks_without_start unscheduled_tasks.merge(reschedule_objs), busy
       result += tasks
 
       # 後ろを詰める
@@ -63,11 +63,19 @@ module Zatsu
 
     def schedule_tasks_with_start task_objects, busy
       tasks = []
+      reschedule_task_objects = {}
       task_objects.each do |name, obj|
         ss_h = obj[:scheduled_start][:hour]
         ss_m = obj[:scheduled_start][:min]
 
         st = Time.zone.now.change hour: ss_h, min: ss_m, sec: 0
+        if st < Time.zone.now
+          print "It has already passed the scheduled start of '#{name}'. Would you like to re-schedule? (y/n) "
+          if STDIN.gets.chomp == "y"
+            reschedule_task_objects[name] = obj
+            next
+          end
+        end
         
         tasks << Task.new(
           name: name,
@@ -83,7 +91,7 @@ module Zatsu
         end
       end
 
-      [tasks, busy]
+      [tasks, reschedule_task_objects, busy]
     end
 
     def schedule_tasks_without_start task_objects, busy
@@ -127,7 +135,7 @@ module Zatsu
     def estimate_duration
       @task_objects.each do |name, info|
         if !info[:estimated_duration] || info[:estimated_duration][0] == :auto
-          logs = TaskModel.where(name: info[:name]).where.not(actual_duration: nil).last(5)
+          logs = TaskModel.where(name: name).where.not(actual_duration: nil).last(5)
           if logs.empty?
             info[:estimated_duration] = info[:estimated_duration] ? info[:estimated_duration][1] : 10
           else
@@ -139,8 +147,10 @@ module Zatsu
     end
 
     def ask_time_to_start
-      print "What time are you going to start your tasks? (e.g. 13:30) "
-      Util::ct(STDIN.gets.chomp)
+      print "What time are you going to start your tasks? (e.g. 13:30; press enter to start now) "
+      input = STDIN.gets.chomp
+      return Time.zone.now if input.empty?
+      Util::ct(input)
     end
 
   end
