@@ -137,11 +137,13 @@ module Zatsu
         if !info[:estimated_duration] || info[:estimated_duration][0] == :auto
           logs = TaskModel.where(name: name).where.not(actual_duration: nil).last(5)
           if logs.empty?
-            info[:estimated_duration] = info[:estimated_duration] ? info[:estimated_duration][1] : 10
+            info[:estimated_duration] = info[:estimated_duration] ? info[:estimated_duration][1].to_i : 10
           else
             # Use average duration
             info[:estimated_duration] = logs.map(&:actual_duration).inject(:+) / logs.size
           end
+        else
+          info[:estimated_duration] = info[:estimated_duration][0].to_i
         end
       end
     end
