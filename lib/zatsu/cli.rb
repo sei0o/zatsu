@@ -34,8 +34,7 @@ module Zatsu
 
       Manager.show_plan plan
 
-      print "Start recording with this plan? (y/n) "
-      return if STDIN.gets.chomp != "y"
+      return unless confirm "Start recording with this plan?"
       Manager.save_plan plan
       Manager.show_status
     end
@@ -51,14 +50,12 @@ module Zatsu
       if Manager.recording?
         Manager.switch_task task_name
 
-        if !options[:noplan] && !Manager.recording? # if finished
-          print "You have finished the plan for today. Want to review your record? (y/n) "
-          Manager.review_recording if STDIN.gets.chomp == "y"
+        if !options[:noplan] && !Manager.recording? && Util::confirm("You have finished the plan for today. Want to review your record?")
+          Manager.review_recording
         end
       else
         if Manager.get_plan.any? && options[:noplan]
-          print "Delete your plan and start without plan? (y/n) "
-          STDIN.gets.chomp == "y" ? Manager.get_plan.destroy_all : return
+          Util::confirm("Delete your plan and start without plan?") ? Manager.get_plan.destroy_all : return
         end
         if Manager.get_plan.empty? && !options[:noplan]
           print "No plans are created."

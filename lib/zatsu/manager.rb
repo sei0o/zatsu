@@ -145,8 +145,7 @@ module Zatsu
         new_tasks << t.name if TaskModel.where(name: t.name).count == 1
       end
       new_tasks.each do |t|
-        print "Save '#{t}' as a routine task? (y/n)"
-        if STDIN.gets.chomp == 'y'
+        if Util::confirm "Save '#{t}' as a routine task?"
           File.open "#{ZATSU_DIR}/generators/routine.rb", 'a' do |f|
             f.puts "task '#{t}'"
           end

@@ -69,12 +69,9 @@ module Zatsu
         ss_m = obj[:scheduled_start][:min]
 
         st = Time.zone.now.change hour: ss_h, min: ss_m, sec: 0
-        if st < Time.zone.now
-          print "It has already passed the scheduled start of '#{name}'. Would you like to re-schedule? (y/n) "
-          if STDIN.gets.chomp == "y"
-            reschedule_task_objects[name] = obj
-            next
-          end
+        if st < Time.zone.now && Util::confirm("It has already passed the scheduled start of '#{name}'. Would you like to re-schedule?")
+          reschedule_task_objects[name] = obj
+          next
         end
         
         tasks << Task.new(
