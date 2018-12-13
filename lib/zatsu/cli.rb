@@ -17,10 +17,11 @@ module Zatsu
     desc "plan [arg1:val1, ...] [--ignore group...]", "plan your schedule for today"
     option :ignore, type: :array, aliases: :i
     def plan *args
-      if Manager.recording?
-        print "A recording has already started. Want to stop and create a new plan? (y/n) "
-        return if STDIN.gets.chomp != "y"
-      end
+      return if Manager.get_plan.any? &&
+        !Util::confirm('A recording based on a plan has already started. Would you like to delete the current plan and create new one?')
+
+      return if Manager.recording? &&
+        !Util::confirm("A recording has already started. Still would you like to create a new plan (it will be appended to your record) ?")
 
       hash = {}
       args.each do |arg|
@@ -28,13 +29,13 @@ module Zatsu
       end
 
       Manager.get_plan.destroy_all
-      plan = Manager.create_plan hash, options["ignore"] || []
+      start_time = Manager.recording? ? Time.zone.now : nil
+      plan = Manager.create_plan hash, options["ignore"] || [], start_time
 
       Manager.show_plan plan
 
       print "Start recording with this plan? (y/n) "
       return if STDIN.gets.chomp != "y"
-      TaskModel.today.destroy_all
       Manager.save_plan plan
       Manager.show_status
     end

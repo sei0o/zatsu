@@ -8,6 +8,11 @@ module Zatsu
 
     module_function
 
+    def confirm str
+      print "#{str} (y/n) "
+      STDIN.gets.chomp == "y"
+    end
+
     def config
       @@config
     end

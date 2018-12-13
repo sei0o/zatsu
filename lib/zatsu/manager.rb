@@ -14,14 +14,14 @@ module Zatsu
   module Manager
     module_function
 
-    def create_plan hash, ignore_group
+    def create_plan hash, ignore_group, start_time = nil
       parsed = {}
       Dir.glob "#{ZATSU_DIR}/generators/*.rb" do |genf|
         groupname = genf[0..-4].split("/").last # the filename without extension ".rb"
         next if ignore_group.include? groupname
         parsed.merge! DSL.parse File.read(genf), groupname.to_sym, hash
       end
-      schedule_tasks(parsed).sort_by(&:estimated_start)
+      schedule_tasks(parsed, start_time).sort_by(&:estimated_start)
     end
 
     def save_plan tasks
@@ -57,8 +57,8 @@ module Zatsu
       end
     end
 
-    def schedule_tasks task_objects
-      FirstFit.new(task_objects).schedule
+    def schedule_tasks task_objects, start_time = nil
+      FirstFit.new(task_objects).schedule(start_time)
       # MostImportant.new(task_objects).schedule
     end
 

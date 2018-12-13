@@ -8,7 +8,7 @@ module Zatsu
       @task_objects = task_objects
     end
 
-    def schedule
+    def schedule start_time = nil
       result = []
       estimate_duration
 
@@ -21,8 +21,8 @@ module Zatsu
       
       if scheduled_tasks.empty?
         start_time = ask_time_to_start
-        busy[start_time.hour * 60 + start_time.min - 1] = "X" # mark the previous minute of the time to start busy
       end
+      busy[start_time.hour * 60 + start_time.min - 1] = "X" if start_time # mark the previous minute of the time to start busy
 
       # 最初のタスク or ユーザが指定した時間より前の領域には入れない
       busy.each_with_index do |val, i|
