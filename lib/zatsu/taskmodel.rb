@@ -7,7 +7,9 @@ module Zatsu
     def self.today
       self.where(actual_start: Time.zone.now.all_day)
           .or(where(estimated_start: Time.zone.now.all_day))
-          .order(Arel.sql('actual_start IS NULL ASC')) # actualを優先
+          .order(:actual_start)
+          .order(Arel.sql('actual_start IS NULL')) # actualを優先
+          .order(Arel.sql('actual_duration IS NULL'))
           .order(Arel.sql('estimated_start IS NOT NULL ASC'))
     end
 

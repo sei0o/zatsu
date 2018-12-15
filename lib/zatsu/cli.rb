@@ -137,6 +137,16 @@ module Zatsu
       tt.each do |x|
         TaskModel.destroy x.id
       end
+
+      Util::command_succeeded
+    end
+
+    desc "split [task #] [length] [--tail or --head]", "split a task into two subsequent tasks"
+    option :tail, aliases: :t
+    option :head, aliases: :h
+    def split idx, len
+      Manager.split_task idx.to_i, !!options["head"], len.to_i
+      Util::command_succeeded
     end
 
     desc "migrate", "migrate db files"

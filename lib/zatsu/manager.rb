@@ -134,6 +134,22 @@ module Zatsu
       show_status
     end
 
+    def split_task idx, take_head, len
+      task = TaskModel.today[idx]
+      unless task.actual_duration
+        raise "Not Implemented splitting a task without actual duration."
+      end
+
+      nt = TaskModel.create(
+        actual_duration: len,
+        actual_start: take_head ? task.actual_start : task.actual_start + task.actual_duration * 60 - len * 60
+      )
+
+      task.actual_duration -= len
+      task.actual_start += len * 60 if take_head
+      task.save
+    end
+
     def review_recording
       export_to_csv "#{ZATSU_DIR}/record.csv"
       system "vim #{ZATSU_DIR}/record.csv"
